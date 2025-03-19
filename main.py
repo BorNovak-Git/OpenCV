@@ -34,6 +34,7 @@ if __name__ == '__main__':
     # Pripravi kamero
 
     kamera = cv.VideoCapture(0)
+    start_time = time.time()
     if not kamera.isOpened():
         print('Kamera ni bila odprta.')
     else:
@@ -41,6 +42,13 @@ if __name__ == '__main__':
             # Preberemo sliko iz kamere
             ret, slika = kamera.read()
             cv.imshow('Kamera', slika)
+
+            # Počaka 3 sekunda potem pa shrani sliko
+            if time.time() - start_time >= 3:
+                cv.imwrite('screenshot.png', slika)
+                print("Screenshot saved as 'screenshot.png'")
+                break
+
             # Če pritisnemo tipko 'q', zapremo okno
             if cv.waitKey(1) & 0xFF == ord('q'):
                 break
