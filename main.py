@@ -27,7 +27,15 @@ def doloci_barvo_koze(slika, levo_zgoraj, desno_spodaj) -> tuple:
     '''Ta funkcija se kliče zgolj 1x na prvi sliki iz kamere. 
     Vrne barvo kože v območju ki ga definira oklepajoča škatla (levo_zgoraj, desno_spodaj).
       Način izračuna je prepuščen vaši domišljiji.'''
-    pass
+
+    x1, y1 = levo_zgoraj
+    x2, y2 = desno_spodaj
+
+    x = slika[y1:y2, x1:x2]
+
+    avg_color = tuple(map(int, np.mean(x, axis=(0, 1))))
+
+    return avg_color
 
 
 if __name__ == '__main__':
@@ -58,10 +66,12 @@ if __name__ == '__main__':
 
     # Zajami prvo sliko iz kamere
     slika = cv.imread('screenshot.png')
+    #obdelana_slika = zmanjsaj_sliko(slika, 240, 320)
+    barva = doloci_barvo_koze(slika, (910, 490), (1010, 590))
+    print("Povprečna barva kože:", barva)
 
-    obdelana_slika = zmanjsaj_sliko(slika, 240,320)
 
-    cv.imshow('Slika',obdelana_slika)
+    cv.imshow('Slika',slika)
     cv.waitKey(0)
     cv.destroyAllWindows()
 
