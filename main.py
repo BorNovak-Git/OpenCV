@@ -1,5 +1,6 @@
 import cv2 as cv
 import numpy as np
+import time
 
 
 def zmanjsaj_sliko(slika, sirina, visina):
@@ -31,6 +32,21 @@ def doloci_barvo_koze(slika, levo_zgoraj, desno_spodaj) -> tuple:
 
 if __name__ == '__main__':
     # Pripravi kamero
+
+    kamera = cv.VideoCapture(0)
+    if not kamera.isOpened():
+        print('Kamera ni bila odprta.')
+    else:
+        while True:
+            # Preberemo sliko iz kamere
+            ret, slika = kamera.read()
+            cv.imshow('Kamera', slika)
+            # Če pritisnemo tipko 'q', zapremo okno
+            if cv.waitKey(1) & 0xFF == ord('q'):
+                break
+        # Zapremo okno
+        kamera.release()
+        cv.destroyAllWindows()
 
     # Zajami prvo sliko iz kamere
 
