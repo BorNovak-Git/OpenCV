@@ -5,7 +5,7 @@ import time
 
 def zmanjsaj_sliko(slika, sirina, visina):
     '''Zmanjšaj sliko na velikost sirina x visina.'''
-    pass
+    return cv.resize(slika, (sirina, visina))
 
 
 def obdelaj_sliko_s_skatlami(slika, sirina_skatle, visina_skatle, barva_koze) -> list:
@@ -57,6 +57,13 @@ if __name__ == '__main__':
         cv.destroyAllWindows()
 
     # Zajami prvo sliko iz kamere
+    slika = cv.imread('screenshot.png')
+
+    obdelana_slika = zmanjsaj_sliko(slika, 240,320)
+
+    cv.imshow('Slika',obdelana_slika)
+    cv.waitKey(0)
+    cv.destroyAllWindows()
 
     # Izračunamo barvo kože na prvi sliki
 
