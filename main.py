@@ -15,12 +15,32 @@ def obdelaj_sliko_s_skatlami(slika, sirina_skatle, visina_skatle, barva_koze) ->
     Primer: Če je v sliki 25 škatel, kjer je v vsaki vrstici 5 škatel, naj bo seznam oblike
       [[1,0,0,1,1],[0,0,0,0,0],[0,0,0,0,0],[0,0,0,0,0],[1,0,0,0,1]]. 
       V tem primeru je v prvi škatli 1 piksel kože, v drugi 0, v tretji 0, v četrti 1 in v peti 1.'''
+
+    visina, sirina, _ = slika.shape
+    rezultat = []
+
+    for y in range(0, visina, visina_skatle):  # 0 -> zacen od (0,0) visina -> konca vrednost visina_skatle -> korak
+        vrstica = []
+        for x in range(0, sirina, sirina_skatle):
+            x1, y1 = x, y
+            x2, y2 = x + sirina_skatle, y + visina_skatle
+
+            cv.rectangle(slika, (x1, y1), (x2, y2), (0, 255, 0), 2)  # Green box
+
+            # Process the box (dummy count for now)
+            st_pikslov_koze = prestej_piklse_z_barvo_koze(slika[y1:y2, x1:x2],barva_koze)
+            vrstica.append(st_pikslov_koze)
+
+        rezultat.append(vrstica)
+
+    return rezultat, slika  # Return both the data and modified image
     pass
 
 
 def prestej_piklse_z_barvo_koze(slika, barva_koze) -> int:
     '''Prestej število pikslov z barvo kože v škatli.'''
-    pass
+   
+
 
 
 def doloci_barvo_koze(slika, levo_zgoraj, desno_spodaj) -> tuple:
@@ -49,7 +69,7 @@ if __name__ == '__main__':
         while True:
             # Preberemo sliko iz kamere
             ret, slika = kamera.read()
-            cv.imshow('Kamera', slika)
+            cv.imshow('Kamera',cv.flip(slika,1))
 
             # Počaka 3 sekunda potem pa shrani sliko
             if time.time() - start_time >= 3:
@@ -66,12 +86,14 @@ if __name__ == '__main__':
 
     # Zajami prvo sliko iz kamere
     slika = cv.imread('screenshot.png')
-    #obdelana_slika = zmanjsaj_sliko(slika, 240, 320)
+    obdelana_slika = zmanjsaj_sliko(slika, 240, 320)
     barva = doloci_barvo_koze(slika, (910, 490), (1010, 590))
     print("Povprečna barva kože:", barva)
 
+    obdelaj_sliko_s_skatlami(obdelana_slika,20,10,barva)
 
-    cv.imshow('Slika',slika)
+
+    cv.imshow('Slika',obdelana_slika)
     cv.waitKey(0)
     cv.destroyAllWindows()
 
