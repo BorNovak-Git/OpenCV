@@ -13,7 +13,7 @@ def obdelaj_sliko_s_skatlami(slika, sirina_skatle, visina_skatle, barva_koze) ->
     Škatle se ne smejo prekrivati!
     Vrne seznam škatel, s številom pikslov kože.
     Primer: Če je v sliki 25 škatel, kjer je v vsaki vrstici 5 škatel, naj bo seznam oblike
-      [[1,0,0,1,1],[0,0,0,0,0],[0,0,0,0,0],[0,0,0,0,0],[1,0,0,0,1]]. 
+      [[1,0,0,1,1],[0,0,0,0,0],[0,0,0,0,0],[0,0,0,0,0],[1,0,0,0,1]].
       V tem primeru je v prvi škatli 1 piksel kože, v drugi 0, v tretji 0, v četrti 1 in v peti 1.'''
 
     visina, sirina, _ = slika.shape
@@ -25,16 +25,13 @@ def obdelaj_sliko_s_skatlami(slika, sirina_skatle, visina_skatle, barva_koze) ->
             x1, y1 = x, y
             x2, y2 = x + sirina_skatle, y + visina_skatle
 
-            cv.rectangle(slika, (x1, y1), (x2, y2), (0, 255, 0), 2)  # Green box
-
             # Process the box (dummy count for now)
             st_pikslov_koze = prestej_piklse_z_barvo_koze(slika[y1:y2, x1:x2],barva_koze)
             vrstica.append(st_pikslov_koze)
 
         rezultat.append(vrstica)
 
-    return rezultat, slika  # Return both the data and modified image
-    pass
+    return rezultat
 
 
 def prestej_piklse_z_barvo_koze(slika, barva_koze) -> int:
@@ -45,15 +42,17 @@ def prestej_piklse_z_barvo_koze(slika, barva_koze) -> int:
         for x in range(0, sirina, 1):
             barva_piksla = tuple(slika[y, x])  # Convert pixel to (R, G, B) tuple
 
-            if barva_piksla == barva_koze:
+            # Check if the pixel is within ±10% of the reference skin color
+            if all(abs(int(barva_piksla[i]) - int(barva_koze[i])) <= int(barva_koze[i]) * 0.1 for i in range(3)):
                 rezultat += 1
 
-        return rezultat
+        #print(rezultat)
+    return rezultat
 
 
 
 def doloci_barvo_koze(slika, levo_zgoraj, desno_spodaj) -> tuple:
-    '''Ta funkcija se kliče zgolj 1x na prvi sliki iz kamere. 
+    '''Ta funkcija se kliče zgolj 1x na prvi sliki iz kamere.
     Vrne barvo kože v območju ki ga definira oklepajoča škatla (levo_zgoraj, desno_spodaj).
       Način izračuna je prepuščen vaši domišljiji.'''
 
@@ -63,7 +62,6 @@ def doloci_barvo_koze(slika, levo_zgoraj, desno_spodaj) -> tuple:
     x = slika[y1:y2, x1:x2]
 
     avg_color = tuple(map(int, np.mean(x, axis=(0, 1))))
-
     return avg_color
 
 
@@ -71,6 +69,10 @@ if __name__ == '__main__':
     # Pripravi kamero
 
     kamera = cv.VideoCapture(0)
+
+    kamera.set(cv.CAP_PROP_FRAME_WIDTH, 280)  # Set width to 280
+    kamera.set(cv.CAP_PROP_FRAME_HEIGHT, 320)  # Set height to 320
+
     start_time = time.time()
     if not kamera.isOpened():
         print('Kamera ni bila odprta.')
@@ -78,6 +80,8 @@ if __name__ == '__main__':
         while True:
             # Preberemo sliko iz kamere
             ret, slika = kamera.read()
+
+
             cv.imshow('Kamera',cv.flip(slika,1))
 
             # Počaka 3 sekunda potem pa shrani sliko
@@ -95,12 +99,30 @@ if __name__ == '__main__':
 
     # Zajami prvo sliko iz kamere
     slika = cv.imread('screenshot.png')
-    obdelana_slika = zmanjsaj_sliko(slika, 240, 320)
-    barva = doloci_barvo_koze(slika, (910, 490), (1010, 590))
+    obdelana_slika = zmanjsaj_sliko(slika, 280, 320)
+
+    top_left = (100, 100)
+    bottom_right = (180, 220)
+    color = (255, 0, 0)
+    thickness = 2
+    cv.rectangle(obdelana_slika, top_left, bottom_right, color, thickness)
+
+    barva = doloci_barvo_koze(obdelana_slika, top_left, bottom_right)
+
     print("Povprečna barva kože:", barva)
+    sirina_skatle, visina_skatle = 20, 10
+    visina, sirina, _ = obdelana_slika.shape
+    obdelaj_sliko_s_skatlami(obdelana_slika,sirina_skatle,visina_skatle,barva)
 
-    obdelaj_sliko_s_skatlami(obdelana_slika,20,10,barva)
+    skatle = obdelaj_sliko_s_skatlami(obdelana_slika,sirina_skatle,visina_skatle,barva)
 
+    for i, vrstica in enumerate(skatle):  # Loop through rows
+        for j, st_pikslov in enumerate(vrstica):  # Loop through elements in a row
+            x1, y1 = j * sirina_skatle, i * visina_skatle
+            x2, y2 = x1 + sirina_skatle, y1 + visina_skatle
+
+            if st_pikslov >= 2:
+                cv.rectangle(obdelana_slika, (x1, y1), (x2, y2), (0, 255, 0), 1)  # Draw a green rectangle
 
     cv.imshow('Slika',obdelana_slika)
     cv.waitKey(0)
