@@ -39,7 +39,7 @@ def obdelaj_sliko_s_skatlami(slika, sirina_skatle, visina_skatle, barva_koze) ->
 
 def prestej_piklse_z_barvo_koze(slika, barva_koze) -> int:
     '''Prestej število pikslov z barvo kože v škatli.'''
-    visina, sirina, _ = slika.shape
+    visina, sirina, _ =  slika.shape
     rezultat = 0
     for y in range(0, visina, 1):
         for x in range(0, sirina, 1):
