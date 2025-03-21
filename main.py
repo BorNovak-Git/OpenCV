@@ -35,20 +35,21 @@ def obdelaj_sliko_s_skatlami(slika, sirina_skatle, visina_skatle, barva_koze) ->
 
 
 def prestej_piklse_z_barvo_koze(slika, barva_koze) -> int:
-    '''Prestej število pikslov z barvo kože v škatli.'''
-    visina, sirina, _ =  slika.shape
-    rezultat = 0
-    for y in range(0, visina, 1):
-        for x in range(0, sirina, 1):
-            barva_piksla = tuple(slika[y, x])  # Convert pixel to (R, G, B) tuple
+        '''Preštej število pikslov z barvo kože v škatli.'''
+        # Določimo spodnjo in zgornjo mejo (±10%)
+        spodnja_meja = np.array(barva_koze) * 0.9
+        zgornja_meja = np.array(barva_koze) * 1.1
 
-            # Check if the pixel is within ±10% of the reference skin color
-            if all(abs(int(barva_piksla[i]) - int(barva_koze[i])) <= int(barva_koze[i]) * 0.1 for i in range(3)):
-                rezultat += 1
+        # Ustvarimo masko: True kjer je barva med mejama
+        maska = (slika >= spodnja_meja) & (slika <= zgornja_meja)
 
-        #print(rezultat)
-    return rezultat
+        # Vsak piksel mora imeti vse 3 kanale znotraj mej
+        maska_vsi_kanali = np.all(maska, axis=2)
 
+        # Seštejemo vse "True" vrednosti
+        stevilo_ugodinih = np.sum(maska_vsi_kanali)
+
+        return stevilo_ugodinih
 
 
 def doloci_barvo_koze(slika, levo_zgoraj, desno_spodaj) -> tuple:
@@ -74,6 +75,11 @@ if __name__ == '__main__':
     kamera.set(cv.CAP_PROP_FRAME_HEIGHT, 320)  # Set height to 320
 
     start_time = time.time()
+
+    #https://www.geeksforgeeks.org/python-displaying-real-time-fps-at-which-webcam-video-file-is-processed-using-opencv/
+    prev_frame_time = 0
+    new_frame_time = 0
+
     if not kamera.isOpened():
         print('Kamera ni bila odprta.')
     else:
@@ -82,51 +88,55 @@ if __name__ == '__main__':
             ret, slika = kamera.read()
 
 
-            cv.imshow('Kamera',cv.flip(slika,1))
+            #cv.imshow('Kamera',cv.flip(slika,1))
+            obdelana_slika = zmanjsaj_sliko(slika, 280, 320)
 
-            # Počaka 3 sekunda potem pa shrani sliko
-            if time.time() - start_time >= 3:
-                cv.imwrite('screenshot.png', slika)
-                print("Screenshot saved as 'screenshot.png'")
-                break
+            top_left = (100, 100)
+            bottom_right = (180, 220)
 
-            # Če pritisnemo tipko 'q', zapremo okno
+            if time.time() - start_time < 1:
+                barva = doloci_barvo_koze(obdelana_slika, top_left, bottom_right)
+
+            if time.time() - start_time >= 1:
+                font = cv.FONT_HERSHEY_SIMPLEX
+                new_frame_time = time.time()
+                print("Povprečna barva kože:", barva)
+                sirina_skatle, visina_skatle = 10, 20
+                visina, sirina, _ = obdelana_slika.shape
+
+                skatle = obdelaj_sliko_s_skatlami(obdelana_slika, sirina_skatle, visina_skatle, barva)
+
+                for i, vrstica in enumerate(skatle):  # Loop through rows
+                    for j, st_pikslov in enumerate(vrstica):  # Loop through elements in a row
+                        x1, y1 = j * sirina_skatle, i * visina_skatle
+                        x2, y2 = x1 + sirina_skatle, y1 + visina_skatle
+
+                        if st_pikslov >= 2:
+                            cv.rectangle(obdelana_slika, (x1, y1), (x2, y2), (0, 255, 0), 1)  # Draw a green rectangle
+
+                fps = 1 / (new_frame_time - prev_frame_time)
+                prev_frame_time = new_frame_time
+
+                fps = int(fps)
+
+                # converting the fps to string so that we can display it on frame
+                # by using putText function
+                fps = str(fps)
+
+                # putting the FPS count on the frame
+                cv.putText(obdelana_slika, fps, (7, 70), font, 3, (100, 255, 0), 3, cv.LINE_AA)
+
+            #cv.imshow('Slika', obdelana_slika)
+            cv.imshow('Kamera', cv.flip(obdelana_slika, 1))
+
+
+                # Če pritisnemo tipko 'q', zapremo okno
             if cv.waitKey(1) & 0xFF == ord('q'):
                 break
         # Zapremo okno
         kamera.release()
         cv.destroyAllWindows()
 
-    # Zajami prvo sliko iz kamere
-    slika = cv.imread('screenshot.png')
-    obdelana_slika = zmanjsaj_sliko(slika, 280, 320)
-
-    top_left = (100, 100)
-    bottom_right = (180, 220)
-    color = (255, 0, 0)
-    thickness = 2
-    cv.rectangle(obdelana_slika, top_left, bottom_right, color, thickness)
-
-    barva = doloci_barvo_koze(obdelana_slika, top_left, bottom_right)
-
-    print("Povprečna barva kože:", barva)
-    sirina_skatle, visina_skatle = 20, 10
-    visina, sirina, _ = obdelana_slika.shape
-    obdelaj_sliko_s_skatlami(obdelana_slika,sirina_skatle,visina_skatle,barva)
-
-    skatle = obdelaj_sliko_s_skatlami(obdelana_slika,sirina_skatle,visina_skatle,barva)
-
-    for i, vrstica in enumerate(skatle):  # Loop through rows
-        for j, st_pikslov in enumerate(vrstica):  # Loop through elements in a row
-            x1, y1 = j * sirina_skatle, i * visina_skatle
-            x2, y2 = x1 + sirina_skatle, y1 + visina_skatle
-
-            if st_pikslov >= 2:
-                cv.rectangle(obdelana_slika, (x1, y1), (x2, y2), (0, 255, 0), 1)  # Draw a green rectangle
-
-    cv.imshow('Slika',obdelana_slika)
-    cv.waitKey(0)
-    cv.destroyAllWindows()
 
     # Izračunamo barvo kože na prvi sliki
 
