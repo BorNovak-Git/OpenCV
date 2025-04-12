@@ -1,10 +1,11 @@
-name: Deploy to DockerHub - 28569
+name: 28569 Deploy
 
 on:
-  push:
-    branches:
-      - main
-
+  workflow_run:
+    workflows: ["28569 Test"]
+    types:
+      - completed
+      
 jobs:
   deploy:
     runs-on: Linux
