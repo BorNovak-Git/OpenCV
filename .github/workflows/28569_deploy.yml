@@ -23,7 +23,7 @@ jobs:
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
-          # Podatki so v settings -> secrets
+          # Podatki so v settings -> secrets ->
 
       - name: Build and Push Docker image
         run: |
