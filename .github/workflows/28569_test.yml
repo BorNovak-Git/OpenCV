@@ -49,6 +49,8 @@ jobs:
         uses: actions/setup-python@v4
         with:
           python-version: ${{ matrix.python }}
+          check-latest: true  # Zagotovi, da se uporabi najnovejša verzija (npr. 3.10.14)
+
 
       - name: Namesti odvisnosti
         run: |
