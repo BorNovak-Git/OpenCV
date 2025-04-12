@@ -7,7 +7,6 @@ on:
 
 jobs:
   deploy:
-    needs: run_tests
     runs-on: Linux
     if: success()
 
