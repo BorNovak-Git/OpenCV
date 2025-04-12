@@ -13,7 +13,7 @@ jobs:
 
     steps:
       - name: Checkout kodo
-        uses: actions/checkout@v3  # Prenese trenutno stanje kode iz GitHub repozitorija
+        uses: actions/checkout@v3.1.0  # Prenese trenutno stanje kode iz GitHub repozitorija
 
       - name: Preveri če obstajajo testi
         id: check
@@ -27,7 +27,7 @@ jobs:
 
       - name: Shrani napaka.txt (če je)
         if: failure()
-        uses: actions/upload-artifact@v3  # Shrani artefakt, ki ga lahko vidiš v GitHub UI
+        uses: actions/upload-artifact@v3.1.0  # Shrani artefakt, ki ga lahko vidiš v GitHub UI
         with:
           name: napaka  # Ime artefakta
           path: napaka.txt  # Datoteka, ki jo želimo shraniti
