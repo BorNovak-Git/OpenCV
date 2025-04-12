@@ -1,36 +1,67 @@
-# This is a basic workflow to help you get started with Actions
+name: 28569 Test
 
-name: CI
-
-# Controls when the workflow will run
 on:
-  # Triggers the workflow on push or pull request events but only for the "main" branch
   push:
-    branches: [ "main" ]
-  pull_request:
-    branches: [ "main" ]
+    branches:
+      - main
 
-  # Allows you to run this workflow manually from the Actions tab
-  workflow_dispatch:
-
-# A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
-  # This workflow contains a single job called "build"
-  build:
-    # The type of runner that the job will run on
+  check_tests:  # Preverimo, če obstajajo testne datoteke
+    runs-on: Linux
+    outputs:
+      tests_exist: ${{ steps.check.outputs.exists }}
+
+    steps:
+      - name: Checkout kodo
+        uses: actions/checkout@v3  # Prenese trenutno stanje kode iz GitHub repozitorija
+
+      - name: Preveri če obstajajo testi
+        id: check
+        run: |
+          if [ -d "tests" ] && ls tests/test_*.py 1> /dev/null 2>&1; then
+            echo "exists=true" >> $GITHUB_OUTPUT
+          else
+            echo "Ni testov!" > napaka.txt
+            echo "exists=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Shrani napaka.txt (če je)
+        if: failure()
+        uses: actions/upload-artifact@v3  # Shrani artefakt, ki ga lahko vidiš v GitHub UI
+        with:
+          name: napaka  # Ime artefakta
+          path: napaka.txt  # Datoteka, ki jo želimo shraniti
+
+  run_tests:  # Namesti okolje in zažene teste
+    needs: check_tests
+    if: needs.check_tests.outputs.tests_exist == 'true'
     runs-on: Linux
 
-    # Steps represent a sequence of tasks that will be executed as part of the job
+    strategy:
+      matrix:
+        python: [3.10, 3.11]  # Matrika test bo zagnan 2 krat enkrat y python 3.8 in drugič z 3.10
+
     steps:
-      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
-      - uses: actions/checkout@v4
+      - name: Checkout kodo
+        uses: actions/checkout@v3
 
-      # Runs a single command using the runners shell
-      - name: Run a one-line script
-        run: echo Hello, world!
+      - name: Namesti Python ${{ matrix.python }}
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ matrix.python }}
 
-      # Runs a set of commands using the runners shell
-      - name: Run a multi-line script
+      - name: Namesti odvisnosti
         run: |
-          echo Add other actions to build,
-          echo test, and deploy your project.
+          python -m pip install --upgrade pip
+          pip install pytest opencv-python
+
+      - name: Zaženi teste
+        run: |
+          pytest || echo "Napaka pri testih!" > napaka.txt
+
+      - name: Shrani napaka.txt (če obstaja)
+        if: failure()
+        uses: actions/upload-artifact@v3
+        with:
+          name: napaka
+          path: napaka.txt
