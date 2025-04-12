@@ -1,0 +1,30 @@
+name: Deploy to DockerHub - 28569
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    needs: run_tests
+    runs-on: self-hosted
+    if: success()
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login to DockerHub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Build and Push Docker image
+        run: |
+          docker build -t ${{ secrets.DOCKERHUB_USERNAME }}/opencv-projekt:latest .
+          docker push ${{ secrets.DOCKERHUB_USERNAME }}/opencv-projekt:latest
