@@ -17,6 +17,7 @@ jobs:
 
       - name: Preveri če obstajajo testi
         id: check
+         # Preverimo, če obstaja mapa "tests" in ali vsebuje teste v obliki test_*.py
         run: |
           if [ -d "tests" ] && ls tests/test_*.py 1> /dev/null 2>&1; then
             echo "exists=true" >> $GITHUB_OUTPUT
@@ -43,12 +44,12 @@ jobs:
 
     steps:
       - name: Checkout kodo
-        uses: actions/checkout@v4
+        uses: actions/checkout@v4  # Nastavi Python okolje za različico v matriki
 
       - name: Namesti Python ${{ matrix.python }}
         uses: actions/setup-python@v4
         with:
-          python-version: ${{ matrix.python }}
+          python-version: ${{ matrix.python }} # Nastavi različico Pythona, ki jo izbere matrika
           check-latest: true  # Zagotovi, da se uporabi najnovejša verzija (npr. 3.10.14)
 
 
