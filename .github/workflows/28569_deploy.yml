@@ -2,14 +2,14 @@ name: 28569 Deploy
 
 on:
   workflow_run:
-    workflows: ["28569 Test"]
+    workflows: ["28569 Test"]   # Ta delovni tok bo zagnan, ko se delovni tok "28569 Test" konča
     types:
-      - completed
+      - completed   # Preveri, da je delovni tok končan (ne glede na uspeh ali neuspeh)
       
 jobs:
   deploy:
     runs-on: Linux
-    if: success()
+    if: success()   # Ta naloga se bo izvedla samo, če prejšnji delovni tok (Test) uspe
 
     steps:
       - name: Checkout code
@@ -19,13 +19,14 @@ jobs:
         uses: docker/setup-buildx-action@v2
 
       - name: Login to DockerHub
-        uses: docker/login-action@v2
+        uses: docker/login-action@v2  # Prijava na DockerHub
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
           # Podatki so v settings -> secrets ->
 
       - name: Build and Push Docker image
+       # Zgradimo Docker sliko z imenom, ki vključuje uporabniško ime in oznako 'latest'
         run: |
           docker build -t ${{ secrets.DOCKERHUB_USERNAME }}/opencv-projekt:latest .
           docker push ${{ secrets.DOCKERHUB_USERNAME }}/opencv-projekt:latest
